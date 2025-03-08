@@ -10,14 +10,20 @@
         let theme = localStorage.getItem("meek_theme") || "light";
         document.documentElement.setAttribute("data-color-mode", theme);
     </script>
-<meta name="description" content="Hello World!。">
+<meta name="description" content="- ###  简易神经网络代码整体结构
+代码分为以下几个部分：
+
+数据生成：生成带有噪声的线性数据。">
 <meta property="og:title" content="线性回归模型学习">
-<meta property="og:description" content="Hello World!。">
+<meta property="og:description" content="- ###  简易神经网络代码整体结构
+代码分为以下几个部分：
+
+数据生成：生成带有噪声的线性数据。">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://Nicky1818.github.io/post/xian-xing-hui-gui-mo-xing-xue-xi.html">
 <meta property="og:image" content="https://avatars.githubusercontent.com/u/166895458?v=4">
 <title>线性回归模型学习</title>
-
+<link href="//unpkg.com/@wooorm/starry-night@2.1.1/style/both.css" rel="stylesheet" />
 
 
 </head>
@@ -41,7 +47,17 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
     body {padding: 8px;}
     .postTitle{font-size:24px;}
 }
-
+.copy-feedback {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 50px;
+    color: var(--color-fg-on-emphasis);
+    background-color: var(--color-fg-muted);
+    border-radius: 3px;
+    padding: 5px 8px;
+    font-size: 12px;
+}
 </style>
 
 
@@ -73,7 +89,181 @@ body{box-sizing: border-box;min-width: 200px;max-width: 900px;margin: 20px auto;
 </div>
 </div>
     <div id="content">
-<div class="markdown-body" id="postBody"><p>Hello World!</p></div>
+<div class="markdown-body" id="postBody"><ul>
+<li>
+<h3>简易神经网络代码整体结构</h3>
+</li>
+</ul>
+<p>代码分为以下几个部分：</p>
+<p>数据生成：生成带有噪声的线性数据。</p>
+<p>数据加载：提供一个数据加载器，用于按批次获取数据。</p>
+<p>模型定义：定义一个简单的线性模型。</p>
+<p>损失函数：定义平均绝对误差（MAE）作为损失函数。</p>
+<p>优化器：实现随机梯度下降（SGD）来更新模型参数。</p>
+<p>训练过程：通过多轮训练，逐步优化模型参数。</p>
+<p>结果可视化：绘制数据和模型的拟合结果。</p>
+<ul>
+<li>
+<h3>1. 导入库</h3>
+</li>
+</ul>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-k">import</span> <span class="pl-s1">torch</span>
+<span class="pl-k">import</span> <span class="pl-s1">matplotlib</span>.<span class="pl-s1">pyplot</span> <span class="pl-k">as</span> <span class="pl-s1">plt</span> <span class="pl-c">#画图的</span>
+<span class="pl-k">import</span> <span class="pl-s1">random</span> <span class="pl-c">#随机操作</span></pre></div>
+<h3>2.数据生成函数</h3>
+<p><strong>功能</strong><br>
+生成符合线性关系 y = x * w + b 的数据，并添加噪声模拟真实数据。</p>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-k">def</span> <span class="pl-en">creat_data</span>(<span class="pl-s1">w</span>, <span class="pl-s1">b</span>, <span class="pl-s1">data_num</span>):
+    <span class="pl-s1">x</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">normal</span>(<span class="pl-c1">0</span>, <span class="pl-c1">1</span>, (<span class="pl-s1">data_num</span>, <span class="pl-en">len</span>(<span class="pl-s1">w</span>)))  <span class="pl-c"># 生成输入数据</span>
+    <span class="pl-s1">y</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">matmul</span>(<span class="pl-s1">x</span>, <span class="pl-s1">w</span>) <span class="pl-c1">+</span> <span class="pl-s1">b</span>                  <span class="pl-c"># 计算目标值</span>
+    <span class="pl-s1">noise</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">normal</span>(<span class="pl-c1">0</span>, <span class="pl-c1">0.01</span>, <span class="pl-s1">y</span>.<span class="pl-c1">shape</span>)      <span class="pl-c"># 生成噪声</span>
+    <span class="pl-s1">y</span> <span class="pl-c1">+=</span> <span class="pl-s1">noise</span>                                  <span class="pl-c"># 添加噪声</span>
+    <span class="pl-k">return</span> <span class="pl-s1">x</span>, <span class="pl-s1">y</span></pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>def creat_data(w, b, data_num):：定义名为 creat_data 的函数，接受三个参数：权重 w、偏置 b、数据量 data_num。</li>
+<li>x = torch.normal(0, 1, (data_num, len(w)))：生成输入数据 x。torch.normal(均值, 标准差, 形状) 用于生成正态分布随机数。(data_num, len(w)) 表示生成 data_num 行、len(w) 列的矩阵，例如 data_num = 500，len(w) = 4 时，x 是 500x4 的矩阵。</li>
+<li>y = torch.matmul(x, w) + b：计算目标值 y。torch.matmul(x, w) 是矩阵乘法，将 x 的每一行与 w 做点积，+ b 表示加上偏置项。</li>
+<li>noise = torch.normal(0, 0.01, y.shape)：生成噪声，形状与 y 相同，均值为 0，标准差为 0.01。</li>
+<li>y += noise：将噪声添加到 y，模拟真实数据中的随机误差。</li>
+<li>return x, y：返回生成的输入数据 x 和目标值 y。</li>
+</ol>
+<h3>3. 生成数据</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-s1">num</span> <span class="pl-c1">=</span> <span class="pl-c1">500</span>
+<span class="pl-s1">true_w</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">tensor</span>([<span class="pl-c1">8.1</span>, <span class="pl-c1">2</span>, <span class="pl-c1">2</span>, <span class="pl-c1">4</span>])
+<span class="pl-s1">true_b</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">tensor</span>(<span class="pl-c1">1.1</span>)
+<span class="pl-c1">X</span>, <span class="pl-c1">Y</span> <span class="pl-c1">=</span> <span class="pl-en">creat_data</span>(<span class="pl-s1">true_w</span>, <span class="pl-s1">true_b</span>, <span class="pl-s1">num</span>)</pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>num = 500：定义生成数据点的数量为 500。</li>
+<li>true_w = torch.tensor([8.1, 2, 2, 4])：定义真实的权重向量 w，长度为 4。torch.tensor 用于将列表转换为 PyTorch 张量。</li>
+<li>true_b = torch.tensor(1.1)：定义真实的偏置项 b，值为 1.1。</li>
+<li>X, Y = creat_data(true_w, true_b, num)：调用 creat_data 函数生成数据。X 是输入数据，形状为 (500, 4)；Y 是目标值，形状为 (500,)（即长度为 500 的向量）。</li>
+</ol>
+<h3>4. 数据可视化</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-s1">plt</span>.<span class="pl-c1">scatter</span>(<span class="pl-c1">X</span>[:, <span class="pl-c1">3</span>], <span class="pl-c1">Y</span>, <span class="pl-c1">1</span>)
+<span class="pl-s1">plt</span>.<span class="pl-c1">show</span>()</pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>plt.scatter(X[:, 3], Y, 1)：绘制散点图，横轴为 X 的第 4 个特征（索引为 3），纵轴为 Y。X[:, 3] 表示取所有行的第 4 列（Python 索引从 0 开始），1 表示点的大小为 1。选择第 4 个特征是因为 true_w 的第 4 个元素是 4，对 Y 的影响最大，可视化效果更明显。</li>
+<li>plt.show()：显示图形。</li>
+</ol>
+<h3>5. 定义数据加载器</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-k">def</span> <span class="pl-en">data_provider</span>(<span class="pl-s1">data</span>, <span class="pl-s1">label</span>, <span class="pl-s1">batch_size</span>):  <span class="pl-c"># 每次访问这个函数，就能提供一批数据</span>
+    <span class="pl-s1">length</span> <span class="pl-c1">=</span> <span class="pl-en">len</span>(<span class="pl-s1">label</span>)
+    <span class="pl-s1">indices</span> <span class="pl-c1">=</span> <span class="pl-en">list</span>(<span class="pl-en">range</span>(<span class="pl-s1">length</span>))
+    <span class="pl-s1">random</span>.<span class="pl-c1">shuffle</span>(<span class="pl-s1">indices</span>)  <span class="pl-c"># 打乱索引</span>
+
+    <span class="pl-k">for</span> <span class="pl-s1">each</span> <span class="pl-c1">in</span> <span class="pl-en">range</span>(<span class="pl-c1">0</span>, <span class="pl-s1">length</span>, <span class="pl-s1">batch_size</span>):
+        <span class="pl-s1">get_indices</span> <span class="pl-c1">=</span> <span class="pl-s1">indices</span>[<span class="pl-s1">each</span>: <span class="pl-s1">each</span> <span class="pl-c1">+</span> <span class="pl-s1">batch_size</span>]
+        <span class="pl-s1">gst_data</span> <span class="pl-c1">=</span> <span class="pl-s1">data</span>[<span class="pl-s1">get_indices</span>]
+        <span class="pl-s1">get_label</span> <span class="pl-c1">=</span> <span class="pl-s1">label</span>[<span class="pl-s1">get_indices</span>]
+        <span class="pl-k">yield</span> <span class="pl-s1">gst_data</span>, <span class="pl-s1">get_label</span>  <span class="pl-c"># 生成器</span></pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>def data_provider(data, label, batch_size):：定义数据加载函数，接受三个参数：输入数据 data、目标值 label、批次大小 batch_size。</li>
+<li>length = len(label)：获取数据总量（即 label 的长度）。</li>
+<li>indices = list(range(length))：生成索引列表 [0, 1, 2, ..., length - 1]。</li>
+<li>random.shuffle(indices)：打乱索引顺序，确保每个批次的数据是随机的。</li>
+<li>for each in range(0, length, batch_size):：循环遍历数据，每次步长为 batch_size。例如，batch_size = 16 时，循环变量 each 依次为 0, 16, 32, ...。</li>
+<li>get_indices = indices[each: each + batch_size]：取出当前批次的索引（如 0<del>15、16</del>31 等）。</li>
+<li>gst_data = data[get_indices]：根据索引取出对应的输入数据。</li>
+<li>get_label = label[get_indices]：根据索引取出对应的目标值。</li>
+<li>yield gst_data, get_label：使用生成器（yield）返回当前批次的数据，避免一次性加载所有数据到内存。</li>
+</ol>
+<h3>6. 定义模型</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-k">def</span> <span class="pl-en">fun</span>(<span class="pl-s1">x</span>, <span class="pl-s1">w</span>, <span class="pl-s1">b</span>):
+    <span class="pl-s1">pred_y</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">matmul</span>(<span class="pl-s1">x</span>, <span class="pl-s1">w</span>) <span class="pl-c1">+</span> <span class="pl-s1">b</span>
+    <span class="pl-k">return</span> <span class="pl-s1">pred_y</span></pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>def fun(x, w, b):：定义线性模型函数，接受输入 x、权重 w、偏置 b。</li>
+<li>pred_y = torch.matmul(x, w) + b：计算预测值 pred_y。torch.matmul(x, w) 是矩阵乘法，例如 x 是 16x4 的批次数据，w 是 4x1 的向量，结果 pred_y 是 16x1 的向量。</li>
+<li>return pred_y：返回预测值。</li>
+</ol>
+<h3>7. 定义损失函数</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-k">def</span> <span class="pl-en">maeLoss</span>(<span class="pl-s1">pre_y</span>, <span class="pl-s1">y</span>):
+    <span class="pl-k">return</span> <span class="pl-s1">torch</span>.<span class="pl-c1">sum</span>(<span class="pl-en">abs</span>(<span class="pl-s1">pre_y</span> <span class="pl-c1">-</span> <span class="pl-s1">y</span>)) <span class="pl-c1">/</span> <span class="pl-en">len</span>(<span class="pl-s1">y</span>)</pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>def maeLoss(pre_y, y):：定义平均绝对误差（MAE）损失函数，接受预测值 pre_y 和真实值 y。</li>
+<li>torch.sum(abs(pre_y - y))：计算所有样本的绝对误差之和。abs(pre_y - y) 表示每个样本的预测值与真实值的绝对误差。</li>
+<li>/ len(y)：求平均值，得到平均绝对误差。</li>
+</ol>
+<h3>8. 定义优化器</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-k">def</span> <span class="pl-en">sgd</span>(<span class="pl-s1">paras</span>, <span class="pl-s1">lr</span>):  <span class="pl-c"># 随机梯度下降，更新参数</span>
+    <span class="pl-k">with</span> <span class="pl-s1">torch</span>.<span class="pl-c1">no_grad</span>():  <span class="pl-c"># 不计算梯度</span>
+        <span class="pl-k">for</span> <span class="pl-s1">para</span> <span class="pl-c1">in</span> <span class="pl-s1">paras</span>:
+            <span class="pl-s1">para</span> <span class="pl-c1">-=</span> <span class="pl-s1">para</span>.<span class="pl-c1">grad</span> <span class="pl-c1">*</span> <span class="pl-s1">lr</span>
+            <span class="pl-s1">para</span>.<span class="pl-c1">grad</span>.<span class="pl-c1">zero_</span>()  <span class="pl-c"># 清空梯度</span></pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>def sgd(paras, lr):：定义随机梯度下降（SGD）优化器，接受参数列表 paras 和学习率 lr。</li>
+<li>with torch.no_grad():：上下文管理器，内部代码不计算梯度（因为参数更新不需要梯度）。</li>
+<li>for para in paras:：遍历所有参数（如 w 和 b）。</li>
+<li>para -= para.grad * lr：沿梯度反方向更新参数。para.grad 是参数的梯度，lr 是学习率。</li>
+<li>para.grad.zero_()：清空梯度，防止梯度累积影响下一轮计算。注意：zero_() 是原地操作（带下划线的函数会修改张量本身）。</li>
+</ol>
+<h3>9. 初始化参数</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-s1">lr</span> <span class="pl-c1">=</span> <span class="pl-c1">0.03</span>
+<span class="pl-s1">w_0</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">normal</span>(<span class="pl-c1">0</span>, <span class="pl-c1">0.01</span>, <span class="pl-s1">true_w</span>.<span class="pl-c1">shape</span>, <span class="pl-s1">requires_grad</span><span class="pl-c1">=</span><span class="pl-c1">True</span>)  <span class="pl-c"># 需要计算梯度</span>
+<span class="pl-s1">b_0</span> <span class="pl-c1">=</span> <span class="pl-s1">torch</span>.<span class="pl-c1">tensor</span>(<span class="pl-c1">0.01</span>, <span class="pl-s1">requires_grad</span><span class="pl-c1">=</span><span class="pl-c1">True</span>)
+<span class="pl-en">print</span>(<span class="pl-s1">w_0</span>, <span class="pl-s1">b_0</span>)</pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>lr = 0.03：定义学习率（learning rate），控制参数更新的步长。</li>
+<li>w_0 = torch.normal(0, 0.01, true_w.shape, requires_grad=True)：初始化权重 w，形状与 true_w 相同（即 4 维向量）。torch.normal(0, 0.01, ...) 表示从均值为 0、标准差为 0.01 的正态分布采样。requires_grad = True 表示启用梯度计算，PyTorch 会跟踪此张量的所有操作以计算梯度。</li>
+<li>b_0 = torch.tensor(0.01, requires_grad=True)：初始化偏置 b，初始值为 0.01，并启用梯度计算。</li>
+<li>print(w_0, b_0)：打印初始化的参数，方便调试。</li>
+</ol>
+<h3>10. 训练循环</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-s1">epochs</span> <span class="pl-c1">=</span> <span class="pl-c1">50</span>  <span class="pl-c"># 训练50轮</span>
+
+<span class="pl-k">for</span> <span class="pl-s1">epoch</span> <span class="pl-c1">in</span> <span class="pl-en">range</span>(<span class="pl-s1">epochs</span>):
+    <span class="pl-s1">data_loss</span> <span class="pl-c1">=</span> <span class="pl-c1">0</span>
+    <span class="pl-k">for</span> <span class="pl-s1">batch_x</span>, <span class="pl-s1">batch_y</span> <span class="pl-c1">in</span> <span class="pl-en">data_provider</span>(<span class="pl-c1">X</span>, <span class="pl-c1">Y</span>, <span class="pl-s1">batch_size</span>):
+        <span class="pl-s1">pred_y</span> <span class="pl-c1">=</span> <span class="pl-en">fun</span>(<span class="pl-s1">batch_x</span>, <span class="pl-s1">w_0</span>, <span class="pl-s1">b_0</span>)  <span class="pl-c"># 前向传播</span>
+        <span class="pl-s1">loss</span> <span class="pl-c1">=</span> <span class="pl-en">maeLoss</span>(<span class="pl-s1">pred_y</span>, <span class="pl-s1">batch_y</span>)  <span class="pl-c"># 计算损失</span>
+        <span class="pl-s1">loss</span>.<span class="pl-c1">backward</span>()                  <span class="pl-c"># 反向传播</span>
+        <span class="pl-en">sgd</span>([<span class="pl-s1">w_0</span>, <span class="pl-s1">b_0</span>], <span class="pl-s1">lr</span>)             <span class="pl-c"># 更新参数</span>
+        <span class="pl-s1">data_loss</span> <span class="pl-c1">+=</span> <span class="pl-s1">loss</span>                <span class="pl-c"># 累计损失</span>
+    <span class="pl-en">print</span>(<span class="pl-s">"epoch %03d: loss: %.6f"</span> <span class="pl-c1">%</span> (<span class="pl-s1">epoch</span>, <span class="pl-s1">data_loss</span>))</pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>epochs = 50：定义训练轮次为 50。</li>
+<li>for epoch in range(epochs):：外层循环，遍历每一轮训练。</li>
+<li>data_loss = 0：初始化当前轮次的总损失为 0。</li>
+<li>for batch_x, batch_y in data_provider(X, Y, batch_size):：内层循环，遍历每一个批次的数据。</li>
+<li>pred_y = fun(batch_x, w_0, b_0)：前向传播，计算当前批次的预测值。</li>
+<li>loss = maeLoss(pred_y, batch_y)：计算当前批次的损失（平均绝对误差）。</li>
+<li>loss.backward()：反向传播，自动计算所有 requires_grad = True 的张量的梯度。</li>
+<li>sgd([w_0, b_0], lr)：调用优化器，更新参数 w 和 b。</li>
+<li>data_loss += loss：累计当前轮次的总损失。</li>
+<li>print("epoch %03d: loss: %.6f" % (epoch, data_loss))：打印当前轮次的编号和总损失。%03d 表示用 3 位数字显示轮次（如 001, 002），%.6f 表示保留 6 位小数显示损失。</li>
+</ol>
+<h3>11. 结果输出与可视化</h3>
+<div class="highlight highlight-source-python"><pre class="notranslate"><span class="pl-en">print</span>(<span class="pl-s">"真实的函数值是"</span>, <span class="pl-s1">true_w</span>, <span class="pl-s1">true_b</span>)
+<span class="pl-en">print</span>(<span class="pl-s">"深度训练得到的参数值是"</span>, <span class="pl-s1">w_0</span>, <span class="pl-s1">b_0</span>)
+
+<span class="pl-s1">idx</span> <span class="pl-c1">=</span> <span class="pl-c1">3</span>
+<span class="pl-s1">plt</span>.<span class="pl-c1">plot</span>(<span class="pl-c1">X</span>[:, <span class="pl-s1">idx</span>].<span class="pl-c1">detach</span>().<span class="pl-c1">numpy</span>(), 
+         <span class="pl-c1">X</span>[:, <span class="pl-s1">idx</span>].<span class="pl-c1">detach</span>().<span class="pl-c1">numpy</span>() <span class="pl-c1">*</span> <span class="pl-s1">w_0</span>[<span class="pl-s1">idx</span>].<span class="pl-c1">detach</span>().<span class="pl-c1">numpy</span>() <span class="pl-c1">+</span> <span class="pl-s1">b_0</span>.<span class="pl-c1">detach</span>().<span class="pl-c1">numpy</span>())
+<span class="pl-s1">plt</span>.<span class="pl-c1">scatter</span>(<span class="pl-c1">X</span>[:, <span class="pl-s1">idx</span>], <span class="pl-c1">Y</span>, <span class="pl-c1">1</span>)
+<span class="pl-s1">plt</span>.<span class="pl-c1">show</span>()</pre></div>
+<p><strong>逐行解析：</strong></p>
+<ol>
+<li>print("真实的函数值是", true_w, true_b)：打印真实的权重 true_w 和偏置 true_b。</li>
+<li>print("深度训练得到的参数值是", w_0, b_0)：打印训练后的参数 w_0 和 b_0，对比真实值。</li>
+<li>idx = 3：选择第 4 个特征（索引为 3）进行可视化。</li>
+<li>plt.plot(X[:, idx].detach().numpy(), ...)：绘制拟合直线。X[:, idx].detach().numpy() 表示将张量从计算图分离并转换为 NumPy 数组，X[:, idx] * w_0[idx] + b_0 表示根据训练后的参数计算直线上的点。</li>
+<li>plt.scatter(X[:, idx], Y, 1)：绘制数据点的散点图。</li>
+<li>plt.show()：显示图形。</li>
+</ol>
+<h3>总结</h3>
+<p>通过逐行解析，你已经理解了这段代码的每一个细节。接下来可以尝试以下练习：<br>
+修改 true_w 和 true_b，观察模型是否能准确拟合。<br>
+调整 lr 和 batch_size，观察训练效果的变化。<br>
+尝试使用均方误差（MSE）代替 MAE 作为损失函数。</p></div>
 <div style="font-size:small;margin-top:8px;float:right;"></div>
 
 <button class="btn btn-block" type="button" onclick="openComments()" id="cmButton">评论</button>
@@ -98,7 +288,7 @@ if("03/07/2025"!=""){
 </script></div>
 </body>
 <script>
-var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z'};
+var IconList={'sun': 'M8 10.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM8 12a4 4 0 100-8 4 4 0 000 8zM8 0a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0V.75A.75.75 0 018 0zm0 13a.75.75 0 01.75.75v1.5a.75.75 0 01-1.5 0v-1.5A.75.75 0 018 13zM2.343 2.343a.75.75 0 011.061 0l1.06 1.061a.75.75 0 01-1.06 1.06l-1.06-1.06a.75.75 0 010-1.06zm9.193 9.193a.75.75 0 011.06 0l1.061 1.06a.75.75 0 01-1.06 1.061l-1.061-1.06a.75.75 0 010-1.061zM16 8a.75.75 0 01-.75.75h-1.5a.75.75 0 010-1.5h1.5A.75.75 0 0116 8zM3 8a.75.75 0 01-.75.75H.75a.75.75 0 010-1.5h1.5A.75.75 0 013 8zm10.657-5.657a.75.75 0 010 1.061l-1.061 1.06a.75.75 0 11-1.06-1.06l1.06-1.06a.75.75 0 011.06 0zm-9.193 9.193a.75.75 0 010 1.06l-1.06 1.061a.75.75 0 11-1.061-1.06l1.06-1.061a.75.75 0 011.061 0z', 'moon': 'M9.598 1.591a.75.75 0 01.785-.175 7 7 0 11-8.967 8.967.75.75 0 01.961-.96 5.5 5.5 0 007.046-7.046.75.75 0 01.175-.786zm1.616 1.945a7 7 0 01-7.678 7.678 5.5 5.5 0 107.678-7.678z', 'sync': 'M1.705 8.005a.75.75 0 0 1 .834.656 5.5 5.5 0 0 0 9.592 2.97l-1.204-1.204a.25.25 0 0 1 .177-.427h3.646a.25.25 0 0 1 .25.25v3.646a.25.25 0 0 1-.427.177l-1.38-1.38A7.002 7.002 0 0 1 1.05 8.84a.75.75 0 0 1 .656-.834ZM8 2.5a5.487 5.487 0 0 0-4.131 1.869l1.204 1.204A.25.25 0 0 1 4.896 6H1.25A.25.25 0 0 1 1 5.75V2.104a.25.25 0 0 1 .427-.177l1.38 1.38A7.002 7.002 0 0 1 14.95 7.16a.75.75 0 0 1-1.49.178A5.5 5.5 0 0 0 8 2.5Z', 'home': 'M6.906.664a1.749 1.749 0 0 1 2.187 0l5.25 4.2c.415.332.657.835.657 1.367v7.019A1.75 1.75 0 0 1 13.25 15h-3.5a.75.75 0 0 1-.75-.75V9H7v5.25a.75.75 0 0 1-.75.75h-3.5A1.75 1.75 0 0 1 1 13.25V6.23c0-.531.242-1.034.657-1.366l5.25-4.2Zm1.25 1.171a.25.25 0 0 0-.312 0l-5.25 4.2a.25.25 0 0 0-.094.196v7.019c0 .138.112.25.25.25H5.5V8.25a.75.75 0 0 1 .75-.75h3.5a.75.75 0 0 1 .75.75v5.25h2.75a.25.25 0 0 0 .25-.25V6.23a.25.25 0 0 0-.094-.195Z', 'github': 'M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z', 'copy': 'M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z', 'check': 'M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z'};
 var utterancesLoad=0;
 
 let themeSettings={
@@ -132,11 +322,7 @@ console.log("\n %c Gmeek last https://github.com/Meekdai/Gmeek \n","padding:5px 
 <script>
 document.getElementById("pathHome").setAttribute("d",IconList["home"]);
 document.getElementById("pathIssue").setAttribute("d",IconList["github"]);
-cmButton=document.getElementById("cmButton");
-    span=document.createElement("span");
-    span.setAttribute("class","Counter");
-    span.innerHTML="1";
-    cmButton.appendChild(span);
+
 
 
 function openComments(){
@@ -175,7 +361,70 @@ function iFrameLoading(){
     }
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    const createClipboardHTML = (codeContent, additionalClasses = '') => `
+        <pre class="notranslate"><code class="notranslate">${codeContent}</code></pre>
+        <div class="clipboard-container position-absolute right-0 top-0 ${additionalClasses}">
+            <clipboard-copy class="ClipboardButton btn m-2 p-0" role="button" style="display: inherit;">
+                <svg height="16" width="16" class="octicon octicon-copy m-2"><path d="${IconList["copy"]}"></path></svg>
+                <svg height="16" width="16" class="octicon octicon-check color-fg-success m-2 d-none"><path d="${IconList["check"]}"></path></svg>
+            </clipboard-copy>
+            <div class="copy-feedback">Copied!</div>
+        </div>
+    `;
 
+    const handleCodeElements = (selector = '') => {
+        document.querySelectorAll(selector).forEach(codeElement => {
+            const codeContent = codeElement.innerHTML;
+            const newStructure = document.createElement('div');
+            newStructure.className = 'snippet-clipboard-content position-relative overflow-auto';
+            newStructure.innerHTML = createClipboardHTML(codeContent);
+
+            const parentElement = codeElement.parentElement;
+            if (selector.includes('highlight')) {
+                parentElement.insertBefore(newStructure, codeElement.nextSibling);
+                parentElement.removeChild(codeElement);
+            } else {
+                parentElement.parentElement.replaceChild(newStructure, parentElement);
+            }
+        });
+    };
+
+    handleCodeElements('pre.notranslate > code.notranslate');
+    handleCodeElements('div.highlight > pre.notranslate');
+
+    let currentFeedback = null;
+    document.querySelectorAll('clipboard-copy').forEach(copyButton => {
+        copyButton.addEventListener('click', () => {
+            const codeContent = copyButton.closest('.snippet-clipboard-content').innerText;
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeContent;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            const copyIcon = copyButton.querySelector('.octicon-copy');
+            const checkIcon = copyButton.querySelector('.octicon-check');
+            const copyFeedback = copyButton.nextElementSibling;
+
+            if (currentFeedback && currentFeedback !== copyFeedback) {currentFeedback.style.display = 'none';}
+            currentFeedback = copyFeedback;
+
+            copyIcon.classList.add('d-none');
+            checkIcon.classList.remove('d-none');
+            copyFeedback.style.display = 'block';
+            copyButton.style.borderColor = 'var(--color-success-fg)';
+
+            setTimeout(() => {
+                copyIcon.classList.remove('d-none');
+                checkIcon.classList.add('d-none');
+                copyFeedback.style.display = 'none';
+                copyButton.style.borderColor = '';
+            }, 2000);
+        });
+    });
+});
 
 </script>
 
